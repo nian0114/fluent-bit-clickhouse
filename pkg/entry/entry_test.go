@@ -6,7 +6,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/saagie/fluent-bit-clickhouse/pkg/entry"
+	"github.com/ukrocks007/fluent-bit-clickhouse/pkg/entry"
 )
 
 var _ = Describe("ErrRetry", func() {

@@ -5,7 +5,7 @@ import (
 	"unsafe"
 
 	"github.com/fluent/fluent-bit-go/output"
-	"github.com/saagie/fluent-bit-clickhouse/pkg/log"
+	"github.com/ukrocks007/fluent-bit-clickhouse/pkg/log"
 )
 
 type Value struct {

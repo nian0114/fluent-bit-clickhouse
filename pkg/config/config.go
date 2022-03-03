@@ -3,8 +3,8 @@ package config
 import (
 	"unsafe"
 
+	mgo "github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/fluent/fluent-bit-go/output"
-	mgo "gopkg.in/mgo.v2"
 )
 
 func GetAddress(ctx unsafe.Pointer) string {

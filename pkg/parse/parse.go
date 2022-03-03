@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/saagie/fluent-bit-clickhouse/pkg/convert"
 	"github.com/spaolacci/murmur3"
+	"github.com/ukrocks007/fluent-bit-clickhouse/pkg/convert"
 )
 
 func GetHashesFromBytes(data []byte) ([]byte, []byte, error) {

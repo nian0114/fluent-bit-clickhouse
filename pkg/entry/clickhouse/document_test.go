@@ -8,8 +8,8 @@ import (
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 
-	"github.com/saagie/fluent-bit-clickhouse/pkg/entry/clickhouse"
-	"github.com/saagie/fluent-bit-clickhouse/pkg/log"
+	"github.com/ukrocks007/fluent-bit-clickhouse/pkg/entry/clickhouse"
+	"github.com/ukrocks007/fluent-bit-clickhouse/pkg/log"
 )
 
 func stringEntry(value string) []uint8 {

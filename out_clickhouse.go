@@ -8,13 +8,13 @@ import (
 	"time"
 	"unsafe"
 
+	mgo "github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/fluent/fluent-bit-go/output"
-	"github.com/saagie/fluent-bit-clickhouse/pkg/config"
-	flbcontext "github.com/saagie/fluent-bit-clickhouse/pkg/context"
-	"github.com/saagie/fluent-bit-clickhouse/pkg/entry"
-	"github.com/saagie/fluent-bit-clickhouse/pkg/entry/clickhouse"
-	"github.com/saagie/fluent-bit-clickhouse/pkg/log"
-	mgo "gopkg.in/mgo.v2"
+	"github.com/ukrocks007/fluent-bit-clickhouse/pkg/config"
+	flbcontext "github.com/ukrocks007/fluent-bit-clickhouse/pkg/context"
+	"github.com/ukrocks007/fluent-bit-clickhouse/pkg/entry"
+	"github.com/ukrocks007/fluent-bit-clickhouse/pkg/entry/clickhouse"
+	"github.com/ukrocks007/fluent-bit-clickhouse/pkg/log"
 )
 
 const PluginID = "clickhouse"

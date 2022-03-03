@@ -6,7 +6,7 @@ import (
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 
-	"github.com/saagie/fluent-bit-clickhouse/pkg/convert"
+	"github.com/ukrocks007/fluent-bit-clickhouse/pkg/convert"
 )
 
 var _ = DescribeTable("Convert uint32 number", func(value uint32, expected ...uint8) {

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/saagie/fluent-bit-clickhouse/pkg/entry"
-	"github.com/saagie/fluent-bit-clickhouse/pkg/log"
-	mgo "gopkg.in/mgo.v2"
+	mgo "github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/ukrocks007/fluent-bit-clickhouse/pkg/entry"
+	"github.com/ukrocks007/fluent-bit-clickhouse/pkg/log"
 )
 
 type processor struct {

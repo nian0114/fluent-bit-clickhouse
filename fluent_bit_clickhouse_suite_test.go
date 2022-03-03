@@ -20,7 +20,7 @@ func TestFluentBitClickhouse(t *testing.T) {
 
 var dockerPool *dockertest.Pool
 
-const imageName = "docker.io/saagie/fluent-bit-clickhouse"
+const imageName = "docker.io/ukrocks007/fluent-bit-clickhouse"
 const imageTag = "test"
 
 const RunIDKey = "test-id"
