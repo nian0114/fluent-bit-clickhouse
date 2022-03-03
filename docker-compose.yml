@@ -14,10 +14,12 @@ services:
     networks:
       - hermes
 
-  mongodb:
-    image: mongo:4.4.10
+  clickhouse:
+    image: yandex/clickhouse-server
     ports:
-      - "27017:27017"
-    restart: always
+      - "8123:8123"
+    volumes:
+      - ./db:/var/lib/clickhouse
+      - ./clickhouse_config/config.xml:/etc/clickhouse-server/config.xml
     networks:
       - hermes
