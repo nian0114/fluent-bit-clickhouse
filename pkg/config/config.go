@@ -1,18 +1,29 @@
 package config
 
 import (
+	"time"
 	"unsafe"
 
-	mgo "github.com/ClickHouse/clickhouse-go/v2"
+	clickhouse "github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/fluent/fluent-bit-go/output"
 )
 
+type clickhouseParams struct {
+	Addr          []string
+	Table         string
+	Username      string
+	Password      string
+	Auth_database string
+	Database      string
+	Collection    string
+}
+
 func GetAddress(ctx unsafe.Pointer) string {
-	return output.FLBPluginConfigKey(ctx, "host_port")
+	return output.FLBPluginConfigKey(ctx, "endpoint")
 }
 
 func GetCollection(ctx unsafe.Pointer) string {
-	return output.FLBPluginConfigKey(ctx, "collection")
+	return output.FLBPluginConfigKey(ctx, "table")
 }
 
 func GetUsername(ctx unsafe.Pointer) string {
@@ -23,7 +34,7 @@ func GetPassword(ctx unsafe.Pointer) string {
 	return output.FLBPluginConfigKey(ctx, "password")
 }
 
-func GetSource(ctx unsafe.Pointer) string {
+func GetAuthDatabase(ctx unsafe.Pointer) string {
 	return output.FLBPluginConfigKey(ctx, "auth_database")
 }
 
@@ -31,12 +42,30 @@ func GetDatabase(ctx unsafe.Pointer) string {
 	return output.FLBPluginConfigKey(ctx, "database")
 }
 
-func GetConfig(ctx unsafe.Pointer) *mgo.DialInfo {
-	return &mgo.DialInfo{
-		Addrs:    []string{GetAddress(ctx)},
-		Username: GetUsername(ctx),
-		Password: GetPassword(ctx),
-		Source:   GetSource(ctx),
-		Database: GetDatabase(ctx),
+func GetParams(ctx unsafe.Pointer) *clickhouseParams {
+	return &clickhouseParams{
+		Addr:          []string{GetAddress(ctx)},
+		Table:         GetCollection(ctx),
+		Username:      GetUsername(ctx),
+		Password:      GetPassword(ctx),
+		Auth_database: GetAuthDatabase(ctx),
+		Database:      GetDatabase(ctx),
+		Collection:    GetCollection(ctx),
+	}
+}
+
+func GetConfig(ctx unsafe.Pointer) *clickhouse.Options {
+	return &clickhouse.Options{
+		Addr: []string{GetAddress(ctx)},
+		Auth: clickhouse.Auth{
+			Database: GetAuthDatabase(ctx),
+			Username: GetUsername(ctx),
+			Password: GetPassword(ctx),
+		},
+		//Debug:           true,
+		DialTimeout:     time.Second,
+		MaxOpenConns:    10,
+		MaxIdleConns:    5,
+		ConnMaxLifetime: time.Hour,
 	}
 }

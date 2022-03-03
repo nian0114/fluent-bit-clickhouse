@@ -8,14 +8,43 @@ import (
 	"time"
 	"unsafe"
 
-	mgo "github.com/ClickHouse/clickhouse-go/v2"
+	clickhousedb "github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/fluent/fluent-bit-go/output"
 	"github.com/ukrocks007/fluent-bit-clickhouse/pkg/config"
 	flbcontext "github.com/ukrocks007/fluent-bit-clickhouse/pkg/context"
 	"github.com/ukrocks007/fluent-bit-clickhouse/pkg/entry"
-	"github.com/ukrocks007/fluent-bit-clickhouse/pkg/entry/clickhouse"
 	"github.com/ukrocks007/fluent-bit-clickhouse/pkg/log"
 )
+import "encoding/json"
+
+type clickhouseParams struct {
+	Addr          []string
+	Table         string
+	Username      string
+	Password      string
+	Auth_database string
+	Database      string
+	Collection    string
+}
+
+type row struct {
+	tenantId    int64
+	actor       string
+	actor_type  string
+	group       string
+	where       string
+	where_type  string
+	date        string
+	when        string
+	target      string
+	target_id   string
+	action      string
+	action_type string
+	name        string
+	description string
+	timestamp   int64
+	metadata    string
+}
 
 const PluginID = "clickhouse"
 
@@ -66,6 +95,7 @@ func FLBPluginInit(ctxPointer unsafe.Pointer) int {
 
 	value.Config = config.GetConfig(ctxPointer)
 	value.Collection = config.GetCollection(ctxPointer)
+	value.Params = config.GetParams(ctxPointer)
 
 	flbcontext.Set(ctxPointer, value)
 
@@ -90,17 +120,14 @@ func FLBPluginFlushCtx(ctxPointer, data unsafe.Pointer, length C.int, tag *C.cha
 	ctx := log.WithLogger(context.TODO(), logger)
 
 	// Open clickhouse session
-	config := value.Config.(*mgo.DialInfo)
+	config := value.Config.(*clickhousedb.Options)
+	params := value.Params.(*clickhouseParams)
 
 	logger.Info("Connecting to clickhousedb", map[string]interface{}{
-		"hosts":         config.Addrs,
-		"user":          config.Username,
-		"source":        config.Source,
-		"database":      config.Database,
-		"with_password": config.Password != "",
+		"host": config.Addr,
 	})
 
-	session, err := mgo.DialWithInfo(config)
+	session, err := clickhousedb.Open(config)
 	if err != nil {
 		logger.Error("Failed to connect to clickhousedb", map[string]interface{}{
 			"error": err,
@@ -112,9 +139,9 @@ func FLBPluginFlushCtx(ctxPointer, data unsafe.Pointer, length C.int, tag *C.cha
 	defer session.Close()
 
 	dec := output.NewDecoder(data, int(length)) // Create Fluent Bit decoder
-	processor := clickhouse.New(session)
+	// processor := clickhouse.New(session)
 
-	if err := ProcessAll(ctx, dec, processor, value.Collection); err != nil {
+	if err := ProcessAll(ctx, dec, session, params.Database, params.Collection); err != nil {
 		logger.Error("Failed to process logs", map[string]interface{}{
 			"error": err,
 		})
@@ -134,7 +161,7 @@ func FLBPluginFlushCtx(ctxPointer, data unsafe.Pointer, length C.int, tag *C.cha
 	return output.FLB_OK
 }
 
-func ProcessAll(ctx context.Context, dec *output.FLBDecoder, processor entry.Processor, collection string) error {
+func ProcessAll(ctx context.Context, dec *output.FLBDecoder, session clickhousedb.Conn, db string, table string) error {
 	// For log purpose
 	startTime := time.Now()
 	total := 0
@@ -146,7 +173,7 @@ func ProcessAll(ctx context.Context, dec *output.FLBDecoder, processor entry.Pro
 	// Iterate Records
 	for {
 		// Extract Record
-		ts, record, err := entry.GetRecord(dec)
+		ts, record, err := GetRecord(dec)
 		if err != nil {
 			if errors.Is(err, entry.ErrNoRecord) {
 				logger.Debug("Records flushed", map[string]interface{}{
@@ -162,9 +189,58 @@ func ProcessAll(ctx context.Context, dec *output.FLBDecoder, processor entry.Pro
 
 		total++
 
-		if err := processor.ProcessRecord(ctx, ts, record, collection); err != nil {
+		if err := ProcessRecord(ctx, ts, record, db, table, session); err != nil {
 			return fmt.Errorf("process record: %w", err)
 		}
+	}
+
+	return nil
+}
+
+var ErrNoRecord = errors.New("failed to decode entry")
+
+func GetRecord(dec *output.FLBDecoder) (time.Time, map[interface{}]interface{}, error) {
+	ret, ts, record := output.GetRecord(dec)
+
+	switch ret {
+	default:
+		return ts.(output.FLBTime).Time, record, nil
+	case -1:
+		return time.Time{}, nil, ErrNoRecord
+	case -2:
+		return time.Time{}, nil, errors.New("unexpected entry type")
+	}
+}
+
+func ProcessRecord(ctx context.Context, ts time.Time, record map[interface{}]interface{}, db string, table string, session clickhousedb.Conn) error {
+	logger, err := log.GetLogger(ctx)
+	if err != nil {
+		return fmt.Errorf("get logger: %w", err)
+	}
+
+	jsonStr, err := json.Marshal(record)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	var rec row
+	if err := json.Unmarshal(jsonStr, &rec); err != nil {
+		fmt.Println(err)
+	}
+
+	err = session.AsyncInsert(ctx, fmt.Sprintf(`INSERT INTO %s.%s (tenantId, timestamp, actor, actor_type, group,
+		 where, where_type, when, target, target_id, action, action_type, name, description) VALUES
+		  (%d, %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')`, db, table,
+		rec.tenantId, rec.timestamp, rec.actor, rec.actor_type, rec.group,
+		rec.where, rec.where_type, rec.when, rec.target, rec.target_id, rec.action, rec.action_type, rec.name, rec.description), false)
+	if err != nil {
+		logger.Error("Failed to save document", map[string]interface{}{
+			"document":   record,
+			"collection": table,
+			"error":      err,
+		})
+
+		return &entry.ErrRetry{Cause: err}
 	}
 
 	return nil

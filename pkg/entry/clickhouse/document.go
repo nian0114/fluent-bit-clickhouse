@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/saagie/fluent-bit-clickhouse/pkg/log"
-	"github.com/saagie/fluent-bit-clickhouse/pkg/parse"
+	"github.com/ukrocks007/fluent-bit-clickhouse/pkg/log"
+	"github.com/ukrocks007/fluent-bit-clickhouse/pkg/parse"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )

@@ -12,6 +12,7 @@ type Value struct {
 	Logger     log.Logger
 	Config     interface{}
 	Collection string
+	Params     interface{}
 }
 
 func Get(ctxPointer unsafe.Pointer) (*Value, error) {
