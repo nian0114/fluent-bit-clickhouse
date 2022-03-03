@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/saagie/fluent-bit-mongo/pkg/convert"
+	"github.com/saagie/fluent-bit-clickhouse/pkg/convert"
 	"github.com/spaolacci/murmur3"
 )
 

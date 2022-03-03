@@ -31,18 +31,18 @@ type FluentBitMetrics struct {
 }
 
 const (
-	inputName  = "tail.0"  // It depends of the order of the input in the fluent-bit configuration
-	outputName = "mongo.1" // It depends of the order of the output in the fluent-bit configuration
+	inputName  = "tail.0"       // It depends of the order of the input in the fluent-bit configuration
+	outputName = "clickhouse.1" // It depends of the order of the output in the fluent-bit configuration
 
 	logFileCount  = 1
 	logEntryCount = 1
 )
 
 const (
-	mongoUser         = "root"
-	mongoPassword     = "password"
-	mongoAuthDatabase = "admin"
-	mongoDatabase     = "fluent_bit"
+	clickhouseUser         = "root"
+	clickhousePassword     = "password"
+	clickhouseAuthDatabase = "admin"
+	clickhouseDatabase     = "fluent_bit"
 )
 
 var _ = Describe("Run fluent-bit", func() {
@@ -71,10 +71,10 @@ var _ = Describe("Run fluent-bit", func() {
 				}},
 			},
 			Env: []string{
-				fmt.Sprintf("MONGO_USERNAME=%s", mongoUser),
-				fmt.Sprintf("MONGO_PASSWORD=%s", mongoPassword),
-				fmt.Sprintf("MONGO_AUTH_DATABASE=%s", mongoAuthDatabase),
-				fmt.Sprintf("MONGO_DATABASE=%s", mongoDatabase),
+				fmt.Sprintf("CLICKHOUSE_USERNAME=%s", clickhouseUser),
+				fmt.Sprintf("CLICKHOUSE_PASSWORD=%s", clickhousePassword),
+				fmt.Sprintf("CLICKHOUSE_AUTH_DATABASE=%s", clickhouseAuthDatabase),
+				fmt.Sprintf("CLICKHOUSE_DATABASE=%s", clickhouseDatabase),
 				fmt.Sprintf("LOG_FILE=%s", logPath),
 			},
 			Mounts: []string{
@@ -196,46 +196,46 @@ var _ = Describe("Run fluent-bit", func() {
 		})
 	})
 
-	Context("With running mongoDB", func() {
-		const mongoTag = "4.2.12" // https://hub.docker.com/_/mongo?tab=tags
+	Context("With running clickhouseDB", func() {
+		const clickhouseTag = "4.2.12" // https://hub.docker.com/_/clickhouse?tab=tags
 
-		var mongoDB *dockertest.Resource
+		var clickhouseDB *dockertest.Resource
 
 		BeforeEach(func() {
-			By("Starting mongodb", func() {
-				// https://hub.docker.com/_/mongo
+			By("Starting clickhousedb", func() {
+				// https://hub.docker.com/_/clickhouse
 				resource, err := dockerPool.RunWithOptions(&dockertest.RunOptions{
-					Repository:   "mongo",
-					Tag:          mongoTag,
-					Hostname:     "mongo",
+					Repository:   "clickhouse",
+					Tag:          clickhouseTag,
+					Hostname:     "clickhouse",
 					ExposedPorts: []string{"27017/tcp"},
 					Labels: map[string]string{
 						RunIDKey: runID(),
 					},
 					Env: []string{
-						fmt.Sprintf("MONGO_INITDB_ROOT_USERNAME=%s", mongoUser),
-						fmt.Sprintf("MONGO_INITDB_ROOT_PASSWORD=%s", mongoPassword),
+						fmt.Sprintf("CLICKHOUSE_INITDB_ROOT_USERNAME=%s", clickhouseUser),
+						fmt.Sprintf("CLICKHOUSE_INITDB_ROOT_PASSWORD=%s", clickhousePassword),
 					},
 				})
 				Expect(err).ToNot(HaveOccurred())
 
-				mongoDB = resource
+				clickhouseDB = resource
 
 				fluentBitRunOptions.Links = append(fluentBitRunOptions.Links, fmt.Sprintf("%s:%s", resource.Container.ID, resource.Container.Config.Hostname))
 			})
 		})
 
 		AfterEach(func() {
-			if mongoDB == nil {
+			if clickhouseDB == nil {
 				return
 			}
 
 			if _, ok := os.LookupEnv("DEBUG"); ok && CurrentGinkgoTestDescription().Failed {
-				By("Reading mongodb logs", func() {
-					fmt.Fprintln(GinkgoWriter, "==== MongoDB logs ====")
+				By("Reading clickhousedb logs", func() {
+					fmt.Fprintln(GinkgoWriter, "==== ClickhouseDB logs ====")
 
 					err := dockerPool.Client.Logs(docker.LogsOptions{
-						Container:    mongoDB.Container.ID,
+						Container:    clickhouseDB.Container.ID,
 						OutputStream: GinkgoWriter,
 						ErrorStream:  GinkgoWriter,
 						Stdout:       true,
@@ -249,7 +249,7 @@ var _ = Describe("Run fluent-bit", func() {
 				})
 			}
 
-			Expect(mongoDB.Close()).To(Succeed())
+			Expect(clickhouseDB.Close()).To(Succeed())
 		})
 
 		It("Should work", func() {

@@ -1,26 +1,26 @@
-package mongo
+package clickhouse
 
 import (
 	"context"
 	"fmt"
 	"time"
 
-	"github.com/saagie/fluent-bit-mongo/pkg/entry"
-	"github.com/saagie/fluent-bit-mongo/pkg/log"
+	"github.com/saagie/fluent-bit-clickhouse/pkg/entry"
+	"github.com/saagie/fluent-bit-clickhouse/pkg/log"
 	mgo "gopkg.in/mgo.v2"
 )
 
 type processor struct {
-	mongoSession *mgo.Session
+	clickhouseSession *mgo.Session
 }
 
 func New(session *mgo.Session) entry.Processor {
 	return &processor{
-		mongoSession: session,
+		clickhouseSession: session,
 	}
 }
 
-const MongoDefaultDB = ""
+const ClickhouseDefaultDB = ""
 
 func (p *processor) ProcessRecord(ctx context.Context, ts time.Time, record map[interface{}]interface{}, collection_name string) error {
 	logger, err := log.GetLogger(ctx)
@@ -36,12 +36,12 @@ func (p *processor) ProcessRecord(ctx context.Context, ts time.Time, record map[
 
 		return fmt.Errorf("new document: %w", err)
 	}
-	collection := p.mongoSession.DB(MongoDefaultDB).C(logDoc.CollectionName())
+	collection := p.clickhouseSession.DB(ClickhouseDefaultDB).C(logDoc.CollectionName())
 	if collection_name != "" {
-		collection = p.mongoSession.DB(MongoDefaultDB).C(collection_name)
+		collection = p.clickhouseSession.DB(ClickhouseDefaultDB).C(collection_name)
 	}
 
-	logger.Debug("Flushing to mongo", map[string]interface{}{
+	logger.Debug("Flushing to clickhouse", map[string]interface{}{
 		"document.id": logDoc.Id,
 	})
 

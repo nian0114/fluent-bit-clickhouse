@@ -1,4 +1,4 @@
-module github.com/saagie/fluent-bit-mongo
+module github.com/saagie/fluent-bit-clickhouse
 
 go 1.16
 

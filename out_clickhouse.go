@@ -9,15 +9,15 @@ import (
 	"unsafe"
 
 	"github.com/fluent/fluent-bit-go/output"
-	"github.com/saagie/fluent-bit-mongo/pkg/config"
-	flbcontext "github.com/saagie/fluent-bit-mongo/pkg/context"
-	"github.com/saagie/fluent-bit-mongo/pkg/entry"
-	"github.com/saagie/fluent-bit-mongo/pkg/entry/mongo"
-	"github.com/saagie/fluent-bit-mongo/pkg/log"
+	"github.com/saagie/fluent-bit-clickhouse/pkg/config"
+	flbcontext "github.com/saagie/fluent-bit-clickhouse/pkg/context"
+	"github.com/saagie/fluent-bit-clickhouse/pkg/entry"
+	"github.com/saagie/fluent-bit-clickhouse/pkg/entry/clickhouse"
+	"github.com/saagie/fluent-bit-clickhouse/pkg/log"
 	mgo "gopkg.in/mgo.v2"
 )
 
-const PluginID = "mongo"
+const PluginID = "clickhouse"
 
 //export FLBPluginRegister
 func FLBPluginRegister(ctxPointer unsafe.Pointer) int {
@@ -30,7 +30,7 @@ func FLBPluginRegister(ctxPointer unsafe.Pointer) int {
 
 	logger.Info("Registering plugin", nil)
 
-	result := output.FLBPluginRegister(ctxPointer, PluginID, "Go mongo go")
+	result := output.FLBPluginRegister(ctxPointer, PluginID, "Go clickhouse go")
 
 	switch result {
 	case output.FLB_OK:
@@ -89,10 +89,10 @@ func FLBPluginFlushCtx(ctxPointer, data unsafe.Pointer, length C.int, tag *C.cha
 	logger := value.Logger
 	ctx := log.WithLogger(context.TODO(), logger)
 
-	// Open mongo session
+	// Open clickhouse session
 	config := value.Config.(*mgo.DialInfo)
 
-	logger.Info("Connecting to mongodb", map[string]interface{}{
+	logger.Info("Connecting to clickhousedb", map[string]interface{}{
 		"hosts":         config.Addrs,
 		"user":          config.Username,
 		"source":        config.Source,
@@ -102,7 +102,7 @@ func FLBPluginFlushCtx(ctxPointer, data unsafe.Pointer, length C.int, tag *C.cha
 
 	session, err := mgo.DialWithInfo(config)
 	if err != nil {
-		logger.Error("Failed to connect to mongodb", map[string]interface{}{
+		logger.Error("Failed to connect to clickhousedb", map[string]interface{}{
 			"error": err,
 		})
 
@@ -112,7 +112,7 @@ func FLBPluginFlushCtx(ctxPointer, data unsafe.Pointer, length C.int, tag *C.cha
 	defer session.Close()
 
 	dec := output.NewDecoder(data, int(length)) // Create Fluent Bit decoder
-	processor := mongo.New(session)
+	processor := clickhouse.New(session)
 
 	if err := ProcessAll(ctx, dec, processor, value.Collection); err != nil {
 		logger.Error("Failed to process logs", map[string]interface{}{

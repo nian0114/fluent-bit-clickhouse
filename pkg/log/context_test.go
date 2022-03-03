@@ -6,7 +6,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/saagie/fluent-bit-mongo/pkg/log"
+	"github.com/saagie/fluent-bit-clickhouse/pkg/log"
 )
 
 var _ = Describe("Add a valid logger", func() {

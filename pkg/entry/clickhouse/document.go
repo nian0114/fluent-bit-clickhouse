@@ -1,4 +1,4 @@
-package mongo
+package clickhouse
 
 import (
 	"context"
@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/saagie/fluent-bit-mongo/pkg/log"
-	"github.com/saagie/fluent-bit-mongo/pkg/parse"
+	"github.com/saagie/fluent-bit-clickhouse/pkg/log"
+	"github.com/saagie/fluent-bit-clickhouse/pkg/parse"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )

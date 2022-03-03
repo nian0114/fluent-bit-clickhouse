@@ -5,7 +5,7 @@ import (
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 
-	"github.com/saagie/fluent-bit-mongo/pkg/parse"
+	"github.com/saagie/fluent-bit-clickhouse/pkg/parse"
 )
 
 var _ = Describe("Extract string value", func() {

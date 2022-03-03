@@ -13,14 +13,14 @@ import (
 	"github.com/ory/dockertest/v3/docker"
 )
 
-func TestFluentBitMongo(t *testing.T) {
+func TestFluentBitClickhouse(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "FluentBitMongo Suite")
+	RunSpecs(t, "FluentBitClickhouse Suite")
 }
 
 var dockerPool *dockertest.Pool
 
-const imageName = "docker.io/saagie/fluent-bit-mongo"
+const imageName = "docker.io/saagie/fluent-bit-clickhouse"
 const imageTag = "test"
 
 const RunIDKey = "test-id"

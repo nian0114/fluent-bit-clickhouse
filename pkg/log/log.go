@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
-	"github.com/saagie/fluent-bit-mongo/pkg/log/encoder"
+	"github.com/saagie/fluent-bit-clickhouse/pkg/log/encoder"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )

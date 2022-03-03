@@ -1,4 +1,4 @@
-package mongo_test
+package clickhouse_test
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestMongo(t *testing.T) {
+func TestClickhouse(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Mongo Suite")
+	RunSpecs(t, "Clickhouse Suite")
 }
