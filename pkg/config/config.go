@@ -11,6 +11,10 @@ func GetAddress(ctx unsafe.Pointer) string {
 	return output.FLBPluginConfigKey(ctx, "host_port")
 }
 
+func GetCollection(ctx unsafe.Pointer) string {
+	return output.FLBPluginConfigKey(ctx, "collection")
+}
+
 func GetUsername(ctx unsafe.Pointer) string {
 	return output.FLBPluginConfigKey(ctx, "username")
 }

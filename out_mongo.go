@@ -65,6 +65,7 @@ func FLBPluginInit(ctxPointer unsafe.Pointer) int {
 	value.Logger.Info("Initializing plugin", nil)
 
 	value.Config = config.GetConfig(ctxPointer)
+	value.Collection = config.GetCollection(ctxPointer)
 
 	flbcontext.Set(ctxPointer, value)
 
@@ -113,7 +114,7 @@ func FLBPluginFlushCtx(ctxPointer, data unsafe.Pointer, length C.int, tag *C.cha
 	dec := output.NewDecoder(data, int(length)) // Create Fluent Bit decoder
 	processor := mongo.New(session)
 
-	if err := ProcessAll(ctx, dec, processor); err != nil {
+	if err := ProcessAll(ctx, dec, processor, value.Collection); err != nil {
 		logger.Error("Failed to process logs", map[string]interface{}{
 			"error": err,
 		})
@@ -133,7 +134,7 @@ func FLBPluginFlushCtx(ctxPointer, data unsafe.Pointer, length C.int, tag *C.cha
 	return output.FLB_OK
 }
 
-func ProcessAll(ctx context.Context, dec *output.FLBDecoder, processor entry.Processor) error {
+func ProcessAll(ctx context.Context, dec *output.FLBDecoder, processor entry.Processor, collection string) error {
 	// For log purpose
 	startTime := time.Now()
 	total := 0
@@ -161,7 +162,7 @@ func ProcessAll(ctx context.Context, dec *output.FLBDecoder, processor entry.Pro
 
 		total++
 
-		if err := processor.ProcessRecord(ctx, ts, record); err != nil {
+		if err := processor.ProcessRecord(ctx, ts, record, collection); err != nil {
 			return fmt.Errorf("process record: %w", err)
 		}
 	}

@@ -10,7 +10,7 @@ import (
 )
 
 type Processor interface {
-	ProcessRecord(context.Context, time.Time, map[interface{}]interface{}) error
+	ProcessRecord(context.Context, time.Time, map[interface{}]interface{}, string) error
 }
 
 var ErrNoRecord = errors.New("failed to decode entry")

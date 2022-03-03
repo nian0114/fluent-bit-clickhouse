@@ -17,22 +17,22 @@ import (
 const TimeFormat = time.RFC3339Nano
 
 type Document struct {
-	Id             bson.ObjectId `bson:"_id,omitempty"`
-	Log            string        `bson:"log"`
-	Stream         string        `bson:"stream"`
-	Time           string        `bson:"time"`
-	JobExecutionId string        `bson:"job_execution_id"`
-	ProjectId      string        `bson:"project_id"`
-	Customer       string        `bson:"customer"`
-	PlatformId     string        `bson:"platform_id"`
+	Id          bson.ObjectId `bson:"_id,omitempty"`
+	ActionType  string        `bson:"action_type"`
+	Actor       string        `bson:"actor"`
+	ActorType   string        `bson:"actor_type"`
+	Description string        `bson:"description"`
+	Group       string        `bson:"group"`
+	Name        string        `bson:"name"`
+	Target      string        `bson:"target"`
+	TargetId    string        `bson:"target_id"`
+	When        string        `bson:"when"`
+	Where       string        `bson:"where"`
+	WhereType   string        `bson:"where_type"`
 }
 
-func Convert(ctx context.Context, ts time.Time, record map[interface{}]interface{}) (*Document, error) {
+func Convert(ctx context.Context, record map[interface{}]interface{}) (*Document, error) {
 	doc := &Document{}
-
-	if !ts.IsZero() {
-		doc.Time = ts.Format(TimeFormat)
-	}
 
 	if err := doc.Populate(ctx, record); err != nil {
 		return nil, fmt.Errorf("populate document: %w", err)
@@ -42,13 +42,18 @@ func Convert(ctx context.Context, ts time.Time, record map[interface{}]interface
 }
 
 const (
-	LogKey            = "log"
-	StreamKey         = "stream"
-	TimeKey           = "time"
-	JobExecutionIDKey = "job_execution_id"
-	ProjectIDKey      = "project_id"
-	CustomerKey       = "customer"
-	PlatformIDKey     = "platform_id"
+	ActionTypeKey  = "action_type"
+	ActorKey       = "actor"
+	ActorTypeKey   = "actor_type"
+	DescriptionKey = "description"
+	GroupKey       = "group"
+	MetadataKey    = "metadata"
+	NameKey        = "name"
+	TargetKey      = "target"
+	TargetIdKey    = "target_id"
+	WhenKey        = "when"
+	WhereKey       = "where"
+	WhereTypeKey   = "where_type"
 )
 
 func (d *Document) Populate(ctx context.Context, record map[interface{}]interface{}) (err error) {
@@ -57,69 +62,69 @@ func (d *Document) Populate(ctx context.Context, record map[interface{}]interfac
 		return fmt.Errorf("get logger: %w", err)
 	}
 
-	d.Log, err = parse.ExtractStringValue(record, LogKey)
+	d.ActionType, err = parse.ExtractStringValue(record, ActionTypeKey)
 	if err != nil {
 		if !errors.Is(err, &parse.ErrKeyNotFound{
-			LookingFor: LogKey,
+			LookingFor: ActionTypeKey,
 		}) {
-			return fmt.Errorf("parse %s: %w", LogKey, err)
+			return fmt.Errorf("parse %s: %w", ActionTypeKey, err)
 		}
 
 		logger.Debug("Key not found", map[string]interface{}{
 			"error": err,
 		})
 
-		d.Log = ""
+		d.ActionType = ""
 	}
 
-	d.Stream, err = parse.ExtractStringValue(record, StreamKey)
+	d.Actor, err = parse.ExtractStringValue(record, ActorKey)
 	if err != nil {
-		if !errors.Is(err, &parse.ErrKeyNotFound{
-			LookingFor: StreamKey,
-		}) {
-			return fmt.Errorf("parse %s: %w", StreamKey, err)
-		}
-
-		logger.Debug("Key not found, use stdout", map[string]interface{}{
-			"error": err,
-		})
-
-		d.Stream = "stdout"
+		return fmt.Errorf("parse %s: %w", ActorKey, err)
 	}
 
-	ts, err := parse.ExtractStringValue(record, TimeKey)
+	d.ActorType, err = parse.ExtractStringValue(record, ActorTypeKey)
 	if err != nil {
-		if !errors.Is(err, &parse.ErrKeyNotFound{
-			LookingFor: TimeKey,
-		}) {
-			return fmt.Errorf("parse %s: %w", TimeKey, err)
-		}
-
-		logger.Debug("Key not found", map[string]interface{}{
-			"error": err,
-		})
-	} else {
-		d.Time = ts
+		return fmt.Errorf("parse %s: %w", ActorTypeKey, err)
 	}
 
-	d.JobExecutionId, err = parse.ExtractStringValue(record, JobExecutionIDKey)
+	d.Description, err = parse.ExtractStringValue(record, DescriptionKey)
 	if err != nil {
-		return fmt.Errorf("parse %s: %w", JobExecutionIDKey, err)
+		return fmt.Errorf("parse %s: %w", DescriptionKey, err)
 	}
 
-	d.ProjectId, err = parse.ExtractStringValue(record, ProjectIDKey)
+	d.Group, err = parse.ExtractStringValue(record, GroupKey)
 	if err != nil {
-		return fmt.Errorf("parse %s: %w", ProjectIDKey, err)
+		return fmt.Errorf("parse %s: %w", GroupKey, err)
 	}
 
-	d.Customer, err = parse.ExtractStringValue(record, CustomerKey)
+	d.Name, err = parse.ExtractStringValue(record, NameKey)
 	if err != nil {
-		return fmt.Errorf("parse %s: %w", CustomerKey, err)
+		return fmt.Errorf("parse %s: %w", NameKey, err)
 	}
 
-	d.PlatformId, err = parse.ExtractStringValue(record, PlatformIDKey)
+	d.Target, err = parse.ExtractStringValue(record, TargetKey)
 	if err != nil {
-		return fmt.Errorf("parse %s: %w", PlatformIDKey, err)
+		return fmt.Errorf("parse %s: %w", TargetKey, err)
+	}
+
+	d.TargetId, err = parse.ExtractStringValue(record, TargetIdKey)
+	if err != nil {
+		return fmt.Errorf("parse %s: %w", TargetIdKey, err)
+	}
+
+	d.When, err = parse.ExtractStringValue(record, WhenKey)
+	if err != nil {
+		return fmt.Errorf("parse %s: %w", WhenKey, err)
+	}
+
+	d.Where, err = parse.ExtractStringValue(record, WhereKey)
+	if err != nil {
+		return fmt.Errorf("parse %s: %w", WhereKey, err)
+	}
+
+	d.WhereType, err = parse.ExtractStringValue(record, WhereTypeKey)
+	if err != nil {
+		return fmt.Errorf("parse %s: %w", WhereTypeKey, err)
 	}
 
 	return d.generateObjectID()
@@ -145,7 +150,7 @@ func (d *Document) generateObjectID() error {
 }
 
 func (d *Document) CollectionName() string {
-	return strings.Replace(fmt.Sprintf("%s_%s_%s", d.Customer, d.PlatformId, d.ProjectId), "-", "_", -1)
+	return strings.Replace(fmt.Sprintf("%s_%s_%s", d.Name, d.Target, d.Group), "-", "_", -1)
 }
 
 func (d *Document) SaveTo(collection *mgo.Collection) error {

@@ -22,13 +22,13 @@ func New(session *mgo.Session) entry.Processor {
 
 const MongoDefaultDB = ""
 
-func (p *processor) ProcessRecord(ctx context.Context, ts time.Time, record map[interface{}]interface{}) error {
+func (p *processor) ProcessRecord(ctx context.Context, ts time.Time, record map[interface{}]interface{}, collection_name string) error {
 	logger, err := log.GetLogger(ctx)
 	if err != nil {
 		return fmt.Errorf("get logger: %w", err)
 	}
 
-	logDoc, err := Convert(ctx, ts, record)
+	logDoc, err := Convert(ctx, record)
 	if err != nil {
 		logger.Error("Failed to convert record to document", map[string]interface{}{
 			"error": err,
@@ -36,8 +36,10 @@ func (p *processor) ProcessRecord(ctx context.Context, ts time.Time, record map[
 
 		return fmt.Errorf("new document: %w", err)
 	}
-
 	collection := p.mongoSession.DB(MongoDefaultDB).C(logDoc.CollectionName())
+	if collection_name != "" {
+		collection = p.mongoSession.DB(MongoDefaultDB).C(collection_name)
+	}
 
 	logger.Debug("Flushing to mongo", map[string]interface{}{
 		"document.id": logDoc.Id,

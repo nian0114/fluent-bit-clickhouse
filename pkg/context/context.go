@@ -9,8 +9,9 @@ import (
 )
 
 type Value struct {
-	Logger log.Logger
-	Config interface{}
+	Logger     log.Logger
+	Config     interface{}
+	Collection string
 }
 
 func Get(ctxPointer unsafe.Pointer) (*Value, error) {

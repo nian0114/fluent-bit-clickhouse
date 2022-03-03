@@ -9,8 +9,9 @@ RUN go build -buildmode=c-shared -o /go/bin/out_mongo.so -- *.go
 
 ########################################################
 
-FROM fluent/fluent-bit:1.8.3
+FROM fluent/fluent-bit:1.8.12
 
 COPY --from=builder /go/bin/out_mongo.so /out_mongo.so
-
+EXPOSE 8888
+EXPOSE 2020
 CMD ["/fluent-bit/bin/fluent-bit", "-c", "/fluent-bit/etc/fluent-bit.conf", "-e", "/out_mongo.so"]

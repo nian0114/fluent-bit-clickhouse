@@ -1,0 +1,23 @@
+version: "3"
+
+networks:
+  hermes:
+
+services:
+  fluentd:
+    build: ./
+    volumes:
+      - ./fluentd/conf/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf
+    ports:
+      - "8888:8888"
+      - "2020:2020"
+    networks:
+      - hermes
+
+  mongodb:
+    image: mongo:4.4.10
+    ports:
+      - "27017:27017"
+    restart: always
+    networks:
+      - hermes
