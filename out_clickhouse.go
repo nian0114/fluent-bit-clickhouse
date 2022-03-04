@@ -17,16 +17,6 @@ import (
 )
 import "encoding/json"
 
-// type clickhouseParams struct {
-// 	Addr          []string
-// 	Table         string
-// 	Username      string
-// 	Password      string
-// 	Auth_database string
-// 	Database      string
-// 	Collection    string
-// }
-
 type row struct {
 	tenantId    int64
 	actor       string
@@ -120,14 +110,14 @@ func FLBPluginFlushCtx(ctxPointer, data unsafe.Pointer, length C.int, tag *C.cha
 	ctx := log.WithLogger(context.TODO(), logger)
 
 	// Open clickhouse session
-	config := value.Config.(*clickhousedb.Options)
-	params := value.Params.(*clickhouseParams)
+	_config := value.Config.(*clickhousedb.Options)
+	params := value.Params.(*config.ClickhouseParams)
 
 	logger.Info("Connecting to clickhousedb", map[string]interface{}{
-		"host": config.Addr,
+		"host": _config.Addr,
 	})
 
-	session, err := clickhousedb.Open(config)
+	session, err := clickhousedb.Open(_config)
 	if err != nil {
 		logger.Error("Failed to connect to clickhousedb", map[string]interface{}{
 			"error": err,

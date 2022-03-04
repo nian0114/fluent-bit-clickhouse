@@ -8,7 +8,7 @@ import (
 	"github.com/fluent/fluent-bit-go/output"
 )
 
-type clickhouseParams struct {
+type ClickhouseParams struct {
 	Addr          []string
 	Table         string
 	Username      string
@@ -42,8 +42,8 @@ func GetDatabase(ctx unsafe.Pointer) string {
 	return output.FLBPluginConfigKey(ctx, "database")
 }
 
-func GetParams(ctx unsafe.Pointer) *clickhouseParams {
-	return &clickhouseParams{
+func GetParams(ctx unsafe.Pointer) *ClickhouseParams {
+	return &ClickhouseParams{
 		Addr:          []string{GetAddress(ctx)},
 		Table:         GetCollection(ctx),
 		Username:      GetUsername(ctx),
