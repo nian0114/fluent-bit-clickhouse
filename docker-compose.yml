@@ -4,7 +4,7 @@ networks:
   hermes:
 
 services:
-  fluentd:
+  fluent-bit:
     build: ./
     volumes:
       - ./fluentd/conf/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf

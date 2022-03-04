@@ -17,15 +17,15 @@ import (
 )
 import "encoding/json"
 
-type clickhouseParams struct {
-	Addr          []string
-	Table         string
-	Username      string
-	Password      string
-	Auth_database string
-	Database      string
-	Collection    string
-}
+// type clickhouseParams struct {
+// 	Addr          []string
+// 	Table         string
+// 	Username      string
+// 	Password      string
+// 	Auth_database string
+// 	Database      string
+// 	Collection    string
+// }
 
 type row struct {
 	tenantId    int64
