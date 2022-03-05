@@ -7,6 +7,7 @@ require (
 	github.com/fluent/fluent-bit-go v0.0.0-20201210173045-3fd1e0486df2
 	github.com/go-logr/logr v1.2.2
 	github.com/go-logr/zapr v1.0.0
+	github.com/mitchellh/mapstructure v1.4.3
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.16.0
 	github.com/ory/dockertest/v3 v3.7.0

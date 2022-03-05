@@ -62,10 +62,13 @@ func GetConfig(ctx unsafe.Pointer) *clickhouse.Options {
 			Username: GetUsername(ctx),
 			Password: GetPassword(ctx),
 		},
-		//Debug:           true,
-		DialTimeout:     time.Second,
+		// Debug:           true,
+		DialTimeout:     10 * time.Second,
 		MaxOpenConns:    10,
 		MaxIdleConns:    5,
 		ConnMaxLifetime: time.Hour,
+		// Compression: &clickhouse.Compression{
+		// 	Method: clickhouse.CompressionLZ4,
+		// },
 	}
 }

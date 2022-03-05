@@ -15,26 +15,6 @@ import (
 	"github.com/ukrocks007/fluent-bit-clickhouse/pkg/entry"
 	"github.com/ukrocks007/fluent-bit-clickhouse/pkg/log"
 )
-import "encoding/json"
-
-type row struct {
-	tenantId    int64
-	actor       string
-	actor_type  string
-	group       string
-	where       string
-	where_type  string
-	date        string
-	when        string
-	target      string
-	target_id   string
-	action      string
-	action_type string
-	name        string
-	description string
-	timestamp   int64
-	metadata    string
-}
 
 const PluginID = "clickhouse"
 
@@ -131,7 +111,7 @@ func FLBPluginFlushCtx(ctxPointer, data unsafe.Pointer, length C.int, tag *C.cha
 	dec := output.NewDecoder(data, int(length)) // Create Fluent Bit decoder
 	// processor := clickhouse.New(session)
 
-	if err := ProcessAll(ctx, dec, session, params.Database, params.Collection); err != nil {
+	if err := ProcessAll(ctx, dec, session, params.Database, params.Collection, _config); err != nil {
 		logger.Error("Failed to process logs", map[string]interface{}{
 			"error": err,
 		})
@@ -151,7 +131,7 @@ func FLBPluginFlushCtx(ctxPointer, data unsafe.Pointer, length C.int, tag *C.cha
 	return output.FLB_OK
 }
 
-func ProcessAll(ctx context.Context, dec *output.FLBDecoder, session clickhousedb.Conn, db string, table string) error {
+func ProcessAll(ctx context.Context, dec *output.FLBDecoder, session clickhousedb.Conn, db string, table string, config *clickhousedb.Options) error {
 	// For log purpose
 	startTime := time.Now()
 	total := 0
@@ -169,6 +149,7 @@ func ProcessAll(ctx context.Context, dec *output.FLBDecoder, session clickhoused
 				logger.Debug("Records flushed", map[string]interface{}{
 					"count":    total,
 					"duration": time.Since(startTime),
+					"record":   record,
 				})
 
 				break
@@ -179,7 +160,7 @@ func ProcessAll(ctx context.Context, dec *output.FLBDecoder, session clickhoused
 
 		total++
 
-		if err := ProcessRecord(ctx, ts, record, db, table, session); err != nil {
+		if err := ProcessRecord(ctx, ts, record, db, table, config); err != nil {
 			return fmt.Errorf("process record: %w", err)
 		}
 	}
@@ -202,37 +183,63 @@ func GetRecord(dec *output.FLBDecoder) (time.Time, map[interface{}]interface{}, 
 	}
 }
 
-func ProcessRecord(ctx context.Context, ts time.Time, record map[interface{}]interface{}, db string, table string, session clickhousedb.Conn) error {
+func ProcessRecord(ctx context.Context, ts time.Time, record map[interface{}]interface{}, db string, table string, _config *clickhousedb.Options) error {
+
 	logger, err := log.GetLogger(ctx)
 	if err != nil {
 		return fmt.Errorf("get logger: %w", err)
 	}
 
-	jsonStr, err := json.Marshal(record)
+	session, err := clickhousedb.Open(_config)
 	if err != nil {
-		fmt.Println(err)
+		logger.Error("Failed to connect to clickhousedb", map[string]interface{}{
+			"error": err,
+		})
 	}
 
-	var rec row
-	if err := json.Unmarshal(jsonStr, &rec); err != nil {
-		fmt.Println(err)
+	if err := session.Ping(ctx); err != nil {
+		if exception, ok := err.(*clickhousedb.Exception); ok {
+			fmt.Printf("Catch exception [%d] %s \n%s\n", exception.Code, exception.Message, exception.StackTrace)
+			logger.Error("Failed to ping clickhouse", map[string]interface{}{
+				"Code":       exception.Code,
+				"Message":    exception.Message,
+				"StackTrace": exception.StackTrace,
+			})
+		}
 	}
 
-	err = session.AsyncInsert(ctx, fmt.Sprintf(`INSERT INTO %s.%s (tenantId, timestamp, actor, actor_type, group,
-		 where, where_type, when, target, target_id, action, action_type, name, description) VALUES
-		  (%d, %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')`, db, table,
-		rec.tenantId, rec.timestamp, rec.actor, rec.actor_type, rec.group,
-		rec.where, rec.where_type, rec.when, rec.target, rec.target_id, rec.action, rec.action_type, rec.name, rec.description), false)
+	data := make(map[string]interface{})
+
+	for key, value := range record {
+		strKey := fmt.Sprintf("%v", key)
+		if strKey == "tenantId" || strKey == "timestamp" {
+			intValue := fmt.Sprintf("%d", value)
+			data[strKey] = intValue
+		} else {
+			strValue := fmt.Sprintf("%s", value)
+			data[strKey] = strValue
+		}
+	}
+
+	query := fmt.Sprintf(`INSERT INTO %s.%s (tenantId, timestamp, actor, actor_type, group,
+		where, where_type, when, target, target_id, action, action_type, name, description) VALUES
+		(%s, %s, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')`, db, table,
+		data["tenantId"], data["timestamp"],
+		data["actor"], data["actor_type"], data["group"],
+		data["where"], data["where_type"], data["when"], data["target"], data["target_id"], data["action"], data["action_type"], data["name"], data["description"])
+	logger.Info("[Generated Query]", map[string]interface{}{
+		"query": query,
+	})
+	err = session.AsyncInsert(ctx, query, false)
 	if err != nil {
 		logger.Error("Failed to save document", map[string]interface{}{
-			"document":   record,
+			"query":      query,
 			"collection": table,
 			"error":      err,
 		})
 
 		return &entry.ErrRetry{Cause: err}
 	}
-
 	return nil
 }
 
