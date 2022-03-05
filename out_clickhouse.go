@@ -93,9 +93,9 @@ func FLBPluginFlushCtx(ctxPointer, data unsafe.Pointer, length C.int, tag *C.cha
 	_config := value.Config.(*clickhousedb.Options)
 	params := value.Params.(*config.ClickhouseParams)
 
-	logger.Info("Connecting to clickhousedb", map[string]interface{}{
-		"host": _config.Addr,
-	})
+	// logger.Info("Connecting to clickhousedb", map[string]interface{}{
+	// 	"host": _config.Addr,
+	// })
 
 	session, err := clickhousedb.Open(_config)
 	if err != nil {
@@ -227,9 +227,9 @@ func ProcessRecord(ctx context.Context, ts time.Time, record map[interface{}]int
 		data["tenantId"], data["timestamp"],
 		data["actor"], data["actor_type"], data["group"],
 		data["where"], data["where_type"], data["when"], data["target"], data["target_id"], data["action"], data["action_type"], data["name"], data["description"])
-	logger.Info("[Generated Query]", map[string]interface{}{
-		"query": query,
-	})
+	// logger.Info("[Generated Query]", map[string]interface{}{
+	// 	"query": query,
+	// })
 	err = session.AsyncInsert(ctx, query, false)
 	if err != nil {
 		logger.Error("Failed to save document", map[string]interface{}{

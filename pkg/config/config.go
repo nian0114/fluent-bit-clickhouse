@@ -64,9 +64,9 @@ func GetConfig(ctx unsafe.Pointer) *clickhouse.Options {
 		},
 		// Debug:           true,
 		DialTimeout:     10 * time.Second,
-		MaxOpenConns:    10,
-		MaxIdleConns:    5,
-		ConnMaxLifetime: time.Hour,
+		MaxOpenConns:    1,
+		MaxIdleConns:    1,
+		ConnMaxLifetime: time.Minute,
 		// Compression: &clickhouse.Compression{
 		// 	Method: clickhouse.CompressionLZ4,
 		// },
