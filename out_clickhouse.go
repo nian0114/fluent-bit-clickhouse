@@ -104,7 +104,7 @@ func FLBPluginFlushCtx(ctxPointer, data unsafe.Pointer, length C.int, tag *C.cha
 	// processor := clickhouse.New(session)
 
 	if err := ProcessAll(ctx, dec, session, params.Database, params.Collection); err != nil {
-		logger.Error("Failed to process logs", map[string]interface{}{
+		logger.Error("ProcessAll Failed", map[string]interface{}{
 			"error": err,
 		})
 
@@ -134,6 +134,10 @@ func ProcessAll(ctx context.Context, dec *output.FLBDecoder, session clickhoused
 
 	// Iterate Records
 	for {
+		err = GetCount(ctx, session)
+		if err != nil {
+			return &entry.ErrRetry{Cause: err}
+		}
 		// Extract Record
 		_, record, err := GetRecord(dec)
 		if err != nil {
@@ -153,7 +157,10 @@ func ProcessAll(ctx context.Context, dec *output.FLBDecoder, session clickhoused
 		total++
 
 		if err := ProcessRecord(ctx, record, db, table, session); err != nil {
-			return fmt.Errorf("process record: %w", err)
+			if errors.Is(err, &entry.ErrRetry{}) {
+				return err
+			}
+			return fmt.Errorf("ProcessRecord Failed: %w", err)
 		}
 	}
 
@@ -169,15 +176,21 @@ func ProcessRecord(ctx context.Context, record map[interface{}]interface{}, db s
 		return fmt.Errorf("get logger: %w", err)
 	}
 
-	if err := session.Ping(ctx); err != nil {
-		if exception, ok := err.(*clickhousedb.Exception); ok {
-			fmt.Printf("Catch exception [%d] %s \n%s\n", exception.Code, exception.Message, exception.StackTrace)
-			logger.Error("Failed to ping clickhouse", map[string]interface{}{
-				"Code":       exception.Code,
-				"Message":    exception.Message,
-				"StackTrace": exception.StackTrace,
-			})
-		}
+	// if err := session.Ping(ctx); err != nil {
+	// 	if exception, ok := err.(*clickhousedb.Exception); ok {
+	// 		fmt.Printf("Catch exception [%d] %s \n%s\n", exception.Code, exception.Message, exception.StackTrace)
+	// 		logger.Error("Failed to ping clickhouse", map[string]interface{}{
+	// 			"Code":       exception.Code,
+	// 			"Message":    exception.Message,
+	// 			"StackTrace": exception.StackTrace,
+	// 		})
+	// 		return &entry.ErrRetry{Cause: exception}
+	// 	}
+	// }
+
+	err = GetCount(ctx, session)
+	if err != nil {
+		return &entry.ErrRetry{Cause: err}
 	}
 
 	data := make(map[string]interface{})
@@ -202,12 +215,11 @@ func ProcessRecord(ctx context.Context, record map[interface{}]interface{}, db s
 	// logger.Info("[Generated Query]", map[string]interface{}{
 	// 	"query": query,
 	// })
-	err = session.AsyncInsert(ctx, query, false)
-	if err != nil {
+	if errInsert := session.AsyncInsert(ctx, query, false); errInsert != nil {
 		logger.Error("Failed to save document", map[string]interface{}{
 			"query":      query,
 			"collection": table,
-			"error":      err,
+			"error":      errInsert,
 		})
 
 		return &entry.ErrRetry{Cause: err}
@@ -226,6 +238,30 @@ func GetRecord(dec *output.FLBDecoder) (time.Time, map[interface{}]interface{}, 
 	case -2:
 		return time.Time{}, nil, errors.New("unexpected entry type")
 	}
+}
+
+func GetCount(ctx context.Context, session clickhousedb.Conn) error {
+	logger, err := log.GetLogger(ctx)
+	if err != nil {
+		return fmt.Errorf("get logger: %w", err)
+	}
+	rows, err := session.Query(ctx, "SELECT count(*) FROM hermes.auditlogs")
+	if err != nil {
+		return err
+	}
+	for rows.Next() {
+		var (
+			count uint64
+		)
+		if err := rows.Scan(&count); err != nil {
+			return err
+		}
+		logger.Info("Sent Count Query", map[string]interface{}{
+			"count": count,
+		})
+	}
+	rows.Close()
+	return rows.Err()
 }
 
 //export FLBPluginExit

@@ -8,6 +8,7 @@ services:
     build: ./
     volumes:
       - ./fluentd/conf/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf
+      - ./fluentd/flb-storage:/var/log/flb-storage
     ports:
       - "8888:8888"
       - "2020:2020"
