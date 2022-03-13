@@ -6,9 +6,9 @@ import (
 	"os"
 	"sync"
 
+	"github.com/boxyhq/fluent-bit-clickhouse/pkg/log/encoder"
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
-	"github.com/ukrocks007/fluent-bit-clickhouse/pkg/log/encoder"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )

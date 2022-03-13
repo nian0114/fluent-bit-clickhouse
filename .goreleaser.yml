@@ -8,7 +8,7 @@ builds:
 
 dockers:
   - image_templates:
-    - ukrocks007/fluent-bit-clickhouse:{{ .Tag }}
+    - boxyhq/fluent-bit-clickhouse:{{ .Tag }}
     extra_files:
     - go.mod
     - go.sum

@@ -9,11 +9,11 @@ import (
 	"unsafe"
 
 	clickhousedb "github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/boxyhq/fluent-bit-clickhouse/pkg/config"
+	flbcontext "github.com/boxyhq/fluent-bit-clickhouse/pkg/context"
+	"github.com/boxyhq/fluent-bit-clickhouse/pkg/entry"
+	"github.com/boxyhq/fluent-bit-clickhouse/pkg/log"
 	"github.com/fluent/fluent-bit-go/output"
-	"github.com/ukrocks007/fluent-bit-clickhouse/pkg/config"
-	flbcontext "github.com/ukrocks007/fluent-bit-clickhouse/pkg/context"
-	"github.com/ukrocks007/fluent-bit-clickhouse/pkg/entry"
-	"github.com/ukrocks007/fluent-bit-clickhouse/pkg/log"
 )
 
 const PluginID = "clickhouse"

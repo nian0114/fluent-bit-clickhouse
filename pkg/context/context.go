@@ -4,8 +4,8 @@ import (
 	"errors"
 	"unsafe"
 
+	"github.com/boxyhq/fluent-bit-clickhouse/pkg/log"
 	"github.com/fluent/fluent-bit-go/output"
-	"github.com/ukrocks007/fluent-bit-clickhouse/pkg/log"
 )
 
 type Value struct {

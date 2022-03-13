@@ -5,7 +5,7 @@ import (
 	"time"
 
 	mgo "github.com/ClickHouse/clickhouse-go/v2"
-	"github.com/ukrocks007/fluent-bit-clickhouse/pkg/entry"
+	"github.com/boxyhq/fluent-bit-clickhouse/pkg/entry"
 )
 
 type processor struct {

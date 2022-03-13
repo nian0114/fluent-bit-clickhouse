@@ -1,4 +1,4 @@
-module github.com/ukrocks007/fluent-bit-clickhouse
+module github.com/boxyhq/fluent-bit-clickhouse
 
 go 1.16
 
