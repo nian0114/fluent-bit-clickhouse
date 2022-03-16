@@ -3,17 +3,17 @@ package main
 import (
 	"C"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"time"
-	"unsafe"
-
 	clickhousedb "github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/boxyhq/fluent-bit-clickhouse/pkg/config"
 	flbcontext "github.com/boxyhq/fluent-bit-clickhouse/pkg/context"
 	"github.com/boxyhq/fluent-bit-clickhouse/pkg/entry"
 	"github.com/boxyhq/fluent-bit-clickhouse/pkg/log"
 	"github.com/fluent/fluent-bit-go/output"
+	"time"
+	"unsafe"
 )
 
 const PluginID = "clickhouse"
@@ -134,7 +134,7 @@ func ProcessAll(ctx context.Context, dec *output.FLBDecoder, session clickhoused
 
 	// Iterate Records
 	for {
-		err = GetCount(ctx, session)
+		err = GetCount(ctx, session, db, table)
 		if err != nil {
 			return &entry.ErrRetry{Cause: err}
 		}
@@ -188,7 +188,7 @@ func ProcessRecord(ctx context.Context, record map[interface{}]interface{}, db s
 	// 	}
 	// }
 
-	err = GetCount(ctx, session)
+	err = GetCount(ctx, session, db, table)
 	if err != nil {
 		return &entry.ErrRetry{Cause: err}
 	}
@@ -197,21 +197,24 @@ func ProcessRecord(ctx context.Context, record map[interface{}]interface{}, db s
 
 	for key, value := range record {
 		strKey := fmt.Sprintf("%v", key)
-		if strKey == "tenantId" || strKey == "timestamp" {
-			intValue := fmt.Sprintf("%d", value)
-			data[strKey] = intValue
-		} else {
-			strValue := fmt.Sprintf("%s", value)
-			data[strKey] = strValue
-		}
+		strValue := fmt.Sprintf("%s", value)
+		data[strKey] = strValue
 	}
 
-	query := fmt.Sprintf(`INSERT INTO %s.%s (tenantId, timestamp, actor, actor_type, group,
-		where, where_type, when, target, target_id, action, action_type, name, description) VALUES
-		(%s, %s, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')`, db, table,
-		data["tenantId"], data["timestamp"],
-		data["actor"], data["actor_type"], data["group"],
-		data["where"], data["where_type"], data["when"], data["target"], data["target_id"], data["action"], data["action_type"], data["name"], data["description"])
+	b, err := json.Marshal(data)
+	if err != nil {
+		logger.Error("json.Marshal failed", map[string]interface{}{
+			"error":      err,
+		})
+		return &entry.ErrRetry{Cause: err}
+	}
+	mString :=string(b)
+
+	query := fmt.Sprintf(`INSERT INTO %s.%s FORMAT JSONEachRow %s`, db, table, mString)
+
+	logger.Error("Failed to save document", map[string]interface{}{
+		"query":      mString,
+	})
 	// logger.Info("[Generated Query]", map[string]interface{}{
 	// 	"query": query,
 	// })
@@ -240,12 +243,13 @@ func GetRecord(dec *output.FLBDecoder) (time.Time, map[interface{}]interface{}, 
 	}
 }
 
-func GetCount(ctx context.Context, session clickhousedb.Conn) error {
+func GetCount(ctx context.Context, session clickhousedb.Conn, db string, table string) error {
 	logger, err := log.GetLogger(ctx)
 	if err != nil {
 		return fmt.Errorf("get logger: %w", err)
 	}
-	rows, err := session.Query(ctx, "SELECT count(*) FROM hermes.auditlogs")
+
+	rows, err := session.Query(ctx, fmt.Sprintf("SELECT count(*) FROM %s.%s", db, table))
 	if err != nil {
 		return err
 	}
