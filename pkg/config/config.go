@@ -15,7 +15,6 @@ type ClickhouseParams struct {
 	Password      string
 	Auth_database string
 	Database      string
-	Collection    string
 	Time_Key      string
 	Time_Format   string
 }
@@ -24,7 +23,7 @@ func GetAddress(ctx unsafe.Pointer) string {
 	return output.FLBPluginConfigKey(ctx, "endpoint")
 }
 
-func GetCollection(ctx unsafe.Pointer) string {
+func GetTable(ctx unsafe.Pointer) string {
 	return output.FLBPluginConfigKey(ctx, "table")
 }
 
@@ -55,12 +54,11 @@ func GetTimeFormat(ctx unsafe.Pointer) string {
 func GetParams(ctx unsafe.Pointer) *ClickhouseParams {
 	return &ClickhouseParams{
 		Addr:          []string{GetAddress(ctx)},
-		Table:         GetCollection(ctx),
+		Table:         GetTable(ctx),
 		Username:      GetUsername(ctx),
 		Password:      GetPassword(ctx),
 		Auth_database: GetAuthDatabase(ctx),
 		Database:      GetDatabase(ctx),
-		Collection:    GetCollection(ctx),
 		Time_Key:      GetTimeKey(ctx),
 		Time_Format:   GetTimeFormat(ctx),
 	}

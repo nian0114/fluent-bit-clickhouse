@@ -62,7 +62,6 @@ func FLBPluginInit(ctxPointer unsafe.Pointer) int {
 	value.Logger.Info("Initializing plugin", nil)
 
 	value.Config = config.GetConfig(ctxPointer)
-	value.Collection = config.GetCollection(ctxPointer)
 	value.Params = config.GetParams(ctxPointer)
 
 	flbcontext.Set(ctxPointer, value)
@@ -126,7 +125,7 @@ func FLBPluginFlushCtx(ctxPointer, data unsafe.Pointer, length C.int, tag *C.cha
 func ProcessAll(ctx context.Context, dec *output.FLBDecoder, session clickhousedb.Conn, param *config.ClickhouseParams) error {
 	// For log purpose
 	db := param.Database
-	table := param.Collection
+	table := param.Table
 
 	startTime := time.Now()
 	total := 0
@@ -174,7 +173,7 @@ var ErrNoRecord = errors.New("failed to decode entry")
 
 func ProcessRecord(ctx context.Context, record map[interface{}]interface{}, param *config.ClickhouseParams, session clickhousedb.Conn) error {
 	db := param.Database
-	table := param.Collection
+	table := param.Table
 
 	logger, err := log.GetLogger(ctx)
 	if err != nil {
