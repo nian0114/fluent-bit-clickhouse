@@ -103,7 +103,7 @@ func FLBPluginFlushCtx(ctxPointer, data unsafe.Pointer, length C.int, tag *C.cha
 	dec := output.NewDecoder(data, int(length)) // Create Fluent Bit decoder
 	// processor := clickhouse.New(session)
 
-	if err := ProcessAll(ctx, dec, session, params.Database, params.Collection); err != nil {
+	if err := ProcessAll(ctx, dec, session, params); err != nil {
 		logger.Error("ProcessAll Failed", map[string]interface{}{
 			"error": err,
 		})
@@ -123,8 +123,11 @@ func FLBPluginFlushCtx(ctxPointer, data unsafe.Pointer, length C.int, tag *C.cha
 	return output.FLB_OK
 }
 
-func ProcessAll(ctx context.Context, dec *output.FLBDecoder, session clickhousedb.Conn, db string, table string) error {
+func ProcessAll(ctx context.Context, dec *output.FLBDecoder, session clickhousedb.Conn, param *config.ClickhouseParams) error {
 	// For log purpose
+	db := param.Database
+	table := param.Collection
+
 	startTime := time.Now()
 	total := 0
 	logger, err := log.GetLogger(ctx)
@@ -156,7 +159,7 @@ func ProcessAll(ctx context.Context, dec *output.FLBDecoder, session clickhoused
 
 		total++
 
-		if err := ProcessRecord(ctx, record, db, table, session); err != nil {
+		if err := ProcessRecord(ctx, record, param, session); err != nil {
 			if errors.Is(err, &entry.ErrRetry{}) {
 				return err
 			}
@@ -169,7 +172,9 @@ func ProcessAll(ctx context.Context, dec *output.FLBDecoder, session clickhoused
 
 var ErrNoRecord = errors.New("failed to decode entry")
 
-func ProcessRecord(ctx context.Context, record map[interface{}]interface{}, db string, table string, session clickhousedb.Conn) error {
+func ProcessRecord(ctx context.Context, record map[interface{}]interface{}, param *config.ClickhouseParams, session clickhousedb.Conn) error {
+	db := param.Database
+	table := param.Collection
 
 	logger, err := log.GetLogger(ctx)
 	if err != nil {
@@ -199,6 +204,11 @@ func ProcessRecord(ctx context.Context, record map[interface{}]interface{}, db s
 		strKey := fmt.Sprintf("%v", key)
 		strValue := fmt.Sprintf("%s", value)
 		data[strKey] = strValue
+
+		if strKey == param.Time_Key {
+			tm2, _ := time.Parse(param.Time_Format, strValue)
+			data[strKey] = tm2.Unix()
+		}
 	}
 
 	b, err := json.Marshal(data)
